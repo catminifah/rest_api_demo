@@ -46,7 +46,7 @@ class _PostListScreenState extends State<PostListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}',style: TextStyle(color: Colors.red),));
           } else if (snapshot.hasData) {
             List<Post> posts = snapshot.data!;
             return ListView.builder(
