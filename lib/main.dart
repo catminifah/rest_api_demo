@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'services/api_service.dart';
 import 'models/post.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:translator/translator.dart';
 
 void main() {
   runApp(MyApp());
@@ -30,6 +33,7 @@ class PostListScreen extends StatefulWidget {
 
 class _PostListScreenState extends State<PostListScreen> {
   late Future<List<Post>> futurePosts;
+  Map<int, bool> likedPosts = {};
 
   @override
   void initState() {
@@ -42,21 +46,43 @@ class _PostListScreenState extends State<PostListScreen> {
     return text[0].toUpperCase() + text.substring(1);
   }
 
+  void copyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Copy!")),
+    );
+  }
+
+  void sharePost(String title, String body) {
+    Share.share('$title\n\n$body');
+  }
+
+  void translateText(String title,String body) async {
+    String text = title + "\n" + body;
+    final translator = GoogleTranslator();
+    var translation = await translator.translate(text, from: 'auto', to: 'en');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Translated: ${translation.text}")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[300],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[800],
         elevation: 0,
         leading: Icon(
           Icons.article_outlined,
-          color: Colors.black,
+          color: Colors.white,
           size: 30,
         ),
         title: Text(
           'Posts',
           style: GoogleFonts.playfairDisplay(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 25,
           ),
@@ -91,12 +117,28 @@ class _PostListScreenState extends State<PostListScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          capitalize(posts[index].title),
-                          style: GoogleFonts.merriweather(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo,
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: capitalize(
+                                    posts[index].title)[0],
+                                style: GoogleFonts.merriweather(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.indigo,
+                                ),
+                              ),
+                              TextSpan(
+                                text: capitalize(posts[index].title)
+                                    .substring(1),
+                                style: GoogleFonts.merriweather(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.indigo,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(height: 8),
@@ -106,6 +148,36 @@ class _PostListScreenState extends State<PostListScreen> {
                             fontSize: 16,
                             color: Colors.black87,
                           ),
+                        ),
+                        SizedBox(height: 10),
+                        Divider(color: Colors.grey[300]),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                likedPosts[index] == true ? Icons.thumb_up : Icons.thumb_up_off_alt,
+                                color: likedPosts[index] == true ? Colors.blue : Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  likedPosts[index] = !(likedPosts[index] ?? false);
+                                });
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.copy, color: Colors.grey),
+                              onPressed: () => copyToClipboard(posts[index].body),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.translate, color: Colors.grey),
+                              onPressed: () => translateText(posts[index].title,posts[index].body),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.share, color: Colors.grey),
+                              onPressed: () => sharePost(posts[index].title, posts[index].body),
+                            ),
+                          ],
                         ),
                       ],
                     ),
